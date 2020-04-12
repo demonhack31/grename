@@ -1,0 +1,87 @@
+#!/bin/bash
+function contiene() {
+    local n=$#
+    local value=${!n}
+    for ((i=1;i < $#;i++)) {
+        if [ "${!i}" == "${value}" ]; then
+            echo "y"
+            return 0
+        fi
+    }
+    echo "n"
+    return 1
+}
+
+clear
+form=("jpg" "png" "jpeg")
+echo "Renombrar descarga_03022020.txt -> a_01.txt"
+echo "Renombrar image_2004402_828.jpg -> a_02.jpg"
+echo "Renombrar iPhone_garantia1.html -> a_03.html"
+echo -e "       \033[32mD3M\033[37m0N@HA\033[31mCK_31\033[0m"
+echo " "
+echo -n "Ruta de la carpeta contenedora:: "
+read pathicio
+if [ -e "$pathicio" ] 
+then
+	echo -e "\033[31mRuta:\033[0m "$pathicio
+else
+	echo "La ruta indicada no existe!"
+	exit
+fi
+echo -n "Indica el prefijo: "
+read namen
+if [ "$namen" == "" ]
+then
+	export namen="File_"
+fi
+clear
+echo -e "\033[31mAVERTENCIA!\033[0m"
+echo -e "Todos los archivos de la carpeta \033[31m$pathicio\033[0m serán renombrados con el prefijo \033[31m$namen\033[0m, solo su extencion se conservará..."
+echo " "
+read -p "Presiona CTRL + C para salir o enter para continuar..."
+clear
+if [ "$pathicio" !=  "" ]
+then
+	cd "$pathicio"
+	rm list.txt
+	rm rename_log.txt
+	rm rename_backup.sh
+	ls > list.txt
+	echo inicio > rename_log.txt
+	echo "#!/bin/bash" > rename_backup.sh
+	echo "cd '$pathicio'" >> rename_backup.sh
+	ai=1
+	for a in $(cat list.txt)
+	do
+		echo -e "[-] \033[1;33mNombre original\033[0m " $a
+		if [ $a !=  "list.txt" ]
+		then
+			echo Origin: "$a" >> rename_log.txt
+			arc="$a"
+			ext="${arc##*.}"
+			allName=$namen$ai.$ext
+			mv "$a" "$allName"
+			echo -e "[+] \033[1;32mNuevo archivo\033[0m "  $allName
+			echo New: "$allName" >> rename_log.txt
+			if [ $(contiene "${form[@]}" "$ext") == "y" ]
+			then
+				exiftool -all= "$allName"
+				echo "[x] Metadatos eliminados de " $allName
+				echo "Metadata delete of: " $allName >> rename_log.txt
+			fi
+			echo -_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_- >> rename_log.txt
+			echo mv "$allName" "$a" >> rename_backup.sh
+			echo +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+			ai=`expr $ai + 1`
+		fi
+	done
+	rm list.txt
+	echo fin >> rename_log.txt
+	echo exit >> rename_backup.sh
+	echo Para restaurar el nombre de todos tus archivos inicia el script llamado rename_backup.sh que se encuentra en $pathicio > rename_README.txt
+	echo Para restaurar el nombre de todos tus archivos inicia el script llamado rename_backup.sh que se encuentra e $pathicio
+	exit
+else
+	echo Error de ruta! Revisa e intenta nuevamente.
+	exit
+fi
